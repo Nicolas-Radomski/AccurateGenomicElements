@@ -10,7 +10,7 @@ The R script GenomicBasedMachineLearning.R was prepared and tested with R versio
 - library(fastDummies) # version 1.6.3
 - library(dplyr) # version 1.0.9
 # Expected Input
-## 1/ Input group file (tsv) with labels encoded "A" or "B"
+## 1/ Input group file (tsv) with labels encoded "A" or "B" (e.g. GroupLabels-100-samples.tsv)
 ```
 sample			group
 2015.TE.14784.1.19.1	A
@@ -21,7 +21,7 @@ sample			group
 2019.TE.602.1.8.1	B
 2016.TE.4440.1.41.1	A
 ```
-## 2/ Input mutation file (tsv) with potential empty cells for missing data (GenomicProfiles-100-samples.tsv)
+## 2/ Input mutation file (tsv) with potential empty cells for missing data (e.g. GenomicProfiles-100-samples.tsv)
 ```
 Locus	2015.TE.14784.1.19.1	2016.TE.28410.1.48.1	2016.TE.3350.1.18.1	2016.TE.4440.1.41.1
 L1	A0			A0			A1			A1
