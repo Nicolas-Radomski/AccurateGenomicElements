@@ -125,7 +125,7 @@ install_version("fastDummies", version = "1.6.3", repos = "https://cloud.r-proje
 install_version("dplyr", version = "1.0.9", repos = "https://cloud.r-project.org")
 quit()
 ```
-## 2/ Launch with Rscript and provided input files
+## 2/ Launch with Rscript
 ### Call usage
 ```
 Rscript AccurateGenomicElements.R
@@ -143,7 +143,7 @@ Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples
 ```
 docker pull nicolasradomski/accurategenomicelements:1.0
 ```
-## 2/ Launch with Docker and different input files and options
+## 2/ Launch with Docker
 ### Call usage
 ```
 docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.0
