@@ -77,7 +77,7 @@ apt install -y --no-install-recommends \
 ```
 R --version
 ```
-# Install Docker
+# Install Docker (Ubuntu 20.04 LTS Focal Fossa)
 ## 1/ Switch from user to administrator
 ```
 sudo su
