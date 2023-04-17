@@ -136,7 +136,7 @@ Rscript AccurateGenomicElements.R -h
 ```
 ### Command examples
 ```
-Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples_
+Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-Rscript_
 ```
 # Install Docker image and launch with Docker
 ## 1/ Pull Docker image from Docker Hub
