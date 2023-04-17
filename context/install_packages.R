@@ -1,0 +1,8 @@
+install.packages("remotes")
+require(remotes)
+install_version("optparse", version = "1.7.3", repos = "https://cloud.r-project.org")
+install_version("benchmarkme", version = "1.0.8", repos = "https://cloud.r-project.org")
+install_version("doParallel", version = "1.0.17", repos = "https://cloud.r-project.org")
+install_version("data.table", version = "1.14.2", repos = "https://cloud.r-project.org")
+install_version("fastDummies", version = "1.6.3", repos = "https://cloud.r-project.org")
+install_version("dplyr", version = "1.0.9", repos = "https://cloud.r-project.org")
