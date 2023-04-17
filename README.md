@@ -109,22 +109,36 @@ Rscript AccurateGenomicElements.R -h
 ```
 Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples_
 ```
-# Install Docker image and different input files and/or options
+# Install Docker image and launch with Docker
 ## 1/ Install Docker
 ### Switch from user to administrator
+```
 sudo su
+```
 ### Install Docker through snap
+```
 snap install docker
+```
 ### Switch from administrator to user
+```
 exit
+```
 ### Create a docker group called docker
+```
 sudo groupadd docker
+```
 ### Add your user to the docker group
+```
 sudo usermod -aG docker n.radomski
+```
 ### Activate the modifications of groups
+```
 newgrp docker
+```
 ### Check the proper installation
+```
 docker run hello-world
+```
 ## 2/ Pull Docker image from Docker Hub
 ```
 docker pull nicolasradomski/accurategenomicelements:1.0
