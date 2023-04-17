@@ -77,6 +77,35 @@ apt install -y --no-install-recommends \
 ```
 R --version
 ```
+# Install Docker
+## 1/ Switch from user to administrator
+```
+sudo su
+```
+## 2/ Install Docker through snap
+```
+snap install docker
+```
+## 3/ Switch from administrator to user
+```
+exit
+```
+## 4/ Create a docker group called docker
+```
+sudo groupadd docker
+```
+## 5/ Add your user to the docker group
+```
+sudo usermod -aG docker n.radomski
+```
+## 6/ Activate the modifications of groups
+```
+newgrp docker
+```
+## 7/ Check the proper installation
+```
+docker run hello-world
+```
 # Unpack GitHub repository and move inside
 ```
 git clone https://github.com/Nicolas-Radomski/AccurateGenomicElements.git
@@ -96,7 +125,7 @@ install_version("fastDummies", version = "1.6.3", repos = "https://cloud.r-proje
 install_version("dplyr", version = "1.0.9", repos = "https://cloud.r-project.org")
 quit()
 ```
-## 3/ Launch with Rscript and provided input files
+## 2/ Launch with Rscript and provided input files
 ### Call usage
 ```
 Rscript AccurateGenomicElements.R
@@ -110,36 +139,7 @@ Rscript AccurateGenomicElements.R -h
 Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples_
 ```
 # Install Docker image and launch with Docker
-## 1/ Install Docker
-### Switch from user to administrator
-```
-sudo su
-```
-### Install Docker through snap
-```
-snap install docker
-```
-### Switch from administrator to user
-```
-exit
-```
-### Create a docker group called docker
-```
-sudo groupadd docker
-```
-### Add your user to the docker group
-```
-sudo usermod -aG docker n.radomski
-```
-### Activate the modifications of groups
-```
-newgrp docker
-```
-### Check the proper installation
-```
-docker run hello-world
-```
-## 2/ Pull Docker image from Docker Hub
+## 1/ Pull Docker image from Docker Hub
 ```
 docker pull nicolasradomski/accurategenomicelements:1.0
 ```
