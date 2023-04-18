@@ -6,9 +6,9 @@ The R script GenomicBasedMachineLearning.R was prepared and tested with R versio
 - library(optparse) # version 1.7.3
 - library(benchmarkme) # version 1.0.8
 - library(doParallel) # version 1.0.17
-- library(data.table) # version 1.14.2
+- library(data.table) # version 1.14.8
+- library(dplyr) # version 1.1.1
 - library(fastDummies) # version 1.6.3
-- library(dplyr) # version 1.0.9
 # Expected Input
 ## 1/ Input group file (tsv) with labels encoded "A" or "B" (e.g. GroupLabels-100-samples.tsv)
 ```
@@ -120,9 +120,9 @@ require(remotes)
 install_version("optparse", version = "1.7.3", repos = "https://cloud.r-project.org")
 install_version("benchmarkme", version = "1.0.8", repos = "https://cloud.r-project.org")
 install_version("doParallel", version = "1.0.17", repos = "https://cloud.r-project.org")
-install_version("data.table", version = "1.14.2", repos = "https://cloud.r-project.org")
+install_version("data.table", version = "1.14.8", repos = "https://cloud.r-project.org")
+install_version("dplyr", version = "1.1.1", repos = "https://cloud.r-project.org")
 install_version("fastDummies", version = "1.6.3", repos = "https://cloud.r-project.org")
-install_version("dplyr", version = "1.0.9", repos = "https://cloud.r-project.org")
 quit()
 ```
 ## 2/ Launch with Rscript
@@ -141,25 +141,24 @@ Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples
 # Install Docker image and launch with Docker
 ## 1/ Pull Docker image from Docker Hub
 ```
-docker pull nicolasradomski/accurategenomicelements:1.0
+docker pull nicolasradomski/accurategenomicelements:1.1
 ```
 ## 2/ Launch with Docker
 ### Call usage
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.0
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.1
 ```
 ### Call help
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.0 -h
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.1 -h
 ```
 ### Command examples
 ```
-docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.0 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
+docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.1 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
 ```
 # Expected output
-- summary_workflow.txt
-- results.AversusB.tsv
-- results.BversusA.tsv
+- summary.txt
+- results.tsv
 - saved_data.RData (optional)
 - saved_images.RData (optional)
 # Illustration

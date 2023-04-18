@@ -26,17 +26,17 @@ require(remotes)
 install_version("optparse", version = "1.7.3", repos = "https://cloud.r-project.org")
 install_version("benchmarkme", version = "1.0.8", repos = "https://cloud.r-project.org")
 install_version("doParallel", version = "1.0.17", repos = "https://cloud.r-project.org")
-install_version("data.table", version = "1.14.2", repos = "https://cloud.r-project.org")
+install_version("data.table", version = "1.14.8", repos = "https://cloud.r-project.org")
+install_version("dplyr", version = "1.1.1", repos = "https://cloud.r-project.org")
 install_version("fastDummies", version = "1.6.3", repos = "https://cloud.r-project.org")
-install_version("dplyr", version = "1.0.9", repos = "https://cloud.r-project.org")
 
 # load packages avoiding warning messages
 suppressPackageStartupMessages(library(optparse)) # version 1.7.3
 suppressPackageStartupMessages(library(benchmarkme)) # version 1.0.8
 suppressPackageStartupMessages(library(doParallel)) # version 1.0.17
-suppressPackageStartupMessages(library(data.table)) # version 1.14.2
+suppressPackageStartupMessages(library(data.table)) # version 1.14.8
+suppressPackageStartupMessages(library(dplyr)) # version 1.1.1
 suppressPackageStartupMessages(library(fastDummies)) # version 1.6.3
-suppressPackageStartupMessages(library(dplyr)) # version 1.0.9
 
 # clean environment
 rm(list=ls())
@@ -90,6 +90,7 @@ help2 <- "Help: Rscript AccurateGenomicElements.R --help"
 # management of mandatory arguments
 ## arguments -g/--groups and -m/--mutations
 if (((is.null(opt$groups)) || (is.null(opt$mutations))) == TRUE){
+  cat("\n", 'Version: 1.1', "\n")
   cat("\n", 'Please, provide at least two input files (i.e. mandatory arguments -g and -m) and potentially other optional arguments:', "\n")
   cat("\n", 'Example 1: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv', "\n")
   cat("\n", 'Example 2: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -c 4 -m GenomicProfiles-100-samples.tsv -c 4 -t 30 -f 50 -a 80 -o MyOutput_', "\n")
@@ -174,8 +175,8 @@ step1.taken <- difftime(step1.time, start.time, units="secs")
 cat(" Step 1 completed: checking of arguments, approx. ", ceiling(step1.taken), " second(s)", "\n", sep = "")
 
 # prepare the dataframe of groups
-## read the dataframe of groups preventing read.table to add "X." as prefix of ID samples starting with number or special character
-data_groups <- read.table(opt$groups, dec = ".", header=TRUE, sep = "\t")
+## read the dataframe of groups preventing "X." as prefix in header variables
+data_groups <- fread(opt$groups, dec = ".", header=TRUE, sep = "\t", check.names = FALSE)
 ## replace by "mutation" the second variable
 names(data_groups)[2] <- "group"
 ## test if the group variable is constituted of A or B
@@ -193,24 +194,16 @@ if ((AB - A - B) != 0) {
 }
 
 # prepare the dataframe of mutations
-## read the dataframe of mutations preventing read.table to add "X." as prefix of ID samples starting with number or special character
-data_mutations <- read.table(opt$mutations, dec = ".", header=TRUE, sep = "\t", check.names = FALSE)
+## read the dataframe of mutations preventing "X." as prefix in header variables
+data_mutations <- fread(opt$mutations, dec = ".", header=TRUE, sep = "\t", check.names = FALSE)
 ## replace by "mutation" the first variable
 names(data_mutations)[1] <- "mutation"
 ## replace missing data by NA
 data_mutations[data_mutations == ''] <- NA
 ## replace missing data encoded "" with missing"
 data_mutations[is.na(data_mutations)] <- "empty"
-
 ## transpose dataframe (data.table)
 trans_data_mutations <- transpose(data_mutations, keep.names = "sample", make.names = "mutation")
-
-# transform variables as factors
-## in the dataframe of groups
-data_groups$group <- as.factor(data_groups$group)
-## in the dataframe of mutations
-col <- ncol(trans_data_mutations)
-trans_data_mutations[2:(col)] <- lapply(trans_data_mutations[2:(col)], FUN = function(y){as.factor(y)})
 
 # test equality of sample identifiers from the input group and mutation files
 ## sample identifiers from the input group file
@@ -230,25 +223,42 @@ step2.time <- Sys.time()
 step2.taken <- difftime(step2.time, step1.time, units="secs")
 cat(" Step 2 completed: reading, transposition and preparation of dataframes, approx. ", ceiling(step2.taken), " second(s)", "\n", sep = "")
 
-# transform the dataframe of categorical mutations as binary (fastDummies: 1.6.3, 2020-11-29)
+# transform the categorical genomic profiles into binary genomic profiles (fastDummies: 1.6.3, 2020-11-29)
 ## retrieve sample identifiers
 sample <- trans_data_mutations$sample
 ## keep mutations in the dataframe
+col <- ncol(trans_data_mutations)
 df <- trans_data_mutations[,2:col]
-## select variables to convert into dummy variables
-colnames <- colnames(df)
-## transform the dataframe of categorical mutations as binary
-binary_trans_data_mutations <- dummy_cols(df, select_columns = colnames,
-                                          remove_first_dummy = FALSE,
-                                          remove_most_frequent_dummy = FALSE,
-                                          remove_selected_columns = TRUE)
+
+# identify binary variables
+is.binary <- apply(df,2,function(x) {all(x %in% 0:1)})
+# get dataframe of binary variable identification
+df.is.binary <- as.data.frame(is.binary)
+# get vector of binary variables
+binary.df <- subset(df.is.binary, is.binary == "TRUE")
+binary.vec <- row.names(binary.df)
+# get vector of binary variables
+categorical.df <- subset(df.is.binary, is.binary == "FALSE")
+categorical.vec <- row.names(categorical.df)
+
+## transformation of categorical profiles into binary profiles
+if (length(categorical.vec) > 1){
+  ### in case of presence of categorical variables
+  binary_trans_data_mutations <- dummy_cols(df, select_columns = categorical.vec,
+                                            remove_first_dummy = FALSE,
+                                            remove_most_frequent_dummy = FALSE,
+                                            remove_selected_columns = TRUE)
+} else {
+  ### in case of absence of categorical variables
+  binary_trans_data_mutations <- df
+}
 ## put back the sample identifiers
 binary_trans_data_mutations <- cbind(sample, binary_trans_data_mutations)
 
 # step control
 step3.time <- Sys.time()
 step3.taken <- difftime(step3.time, step2.time, units="secs")
-cat(" Step 3 completed: transform the dataframe of categorical mutations as binary, approx. ", ceiling(step3.taken), " second(s)", "\n", sep = "")
+cat(" Step 3 completed: transformation of categorical profiles into binary profiles, approx. ", ceiling(step3.taken), " second(s)", "\n", sep = "")
 
 ## joint (dplyr)
 joint_binary_trans_data_mutations <- suppressWarnings(left_join(data_groups, binary_trans_data_mutations, by = "sample", keep = FALSE))
@@ -256,7 +266,7 @@ joint_binary_trans_data_mutations <- suppressWarnings(left_join(data_groups, bin
 # step control
 step4.time <- Sys.time()
 step4.taken <- difftime(step4.time, step3.time, units="secs")
-cat(" Step 4 completed: jointing of the dataframes, approx. ", ceiling(step4.taken), " second(s)", "\n", sep = "")
+cat(" Step 4 completed: jointing of dataframes, approx. ", ceiling(step4.taken), " second(s)", "\n", sep = "")
 
 # splitting of group labels
 ## for the group A
@@ -269,7 +279,7 @@ data_B <- data_B[,-2]
 # step control
 step5.time <- Sys.time()
 step5.taken <- difftime(step5.time, step4.time, units="secs")
-cat(" Step 5 completed: splitting of dataframes of groups, approx. ", ceiling(step5.taken), " second(s)", "\n", sep = "")
+cat(" Step 5 completed: splitting into dataframes according to groups, approx. ", ceiling(step5.taken), " second(s)", "\n", sep = "")
 
 # transpose dataframes of group labels (data.table)
 ## for the group of interest (Gi)
@@ -279,7 +289,7 @@ trans_data_B <- transpose(data_B, keep.names = "genotype", make.names = "sample"
 # step control
 step6.time <- Sys.time()
 step6.taken <- difftime(step6.time, step5.time, units="secs")
-cat(" Step 6 completed: transpositon of dataframes of groups, approx. ", ceiling(step6.taken), " second(s)", "\n", sep = "")
+cat(" Step 6 completed: transpositon of group specific dataframes, approx. ", ceiling(step6.taken), " second(s)", "\n", sep = "")
 
 # calculate metrics
 ## group A versus group B
@@ -368,11 +378,23 @@ results.BvA.subselection <- subset(results.BvA, Ac >= opt$accuracy)
 # step control
 step8.time <- Sys.time()
 step8.taken <- difftime(step8.time, step7.time, units="secs")
-cat(" Step 8 completed: selection of genomic profiles according to thresholds of metrics, approx. ", ceiling(step8.taken), " second(s)", "\n", sep = "")
+cat(" Step 8 completed: selection of genomic profiles according to metric thresholds, approx. ", ceiling(step8.taken), " second(s)", "\n", sep = "")
+
+# combine results from both comparisons "AversusB" and "BversusA"
+# add column called "comparison"
+results.AvB.subselection$comparison <- "AversusB"
+results.BvA.subselection$comparison <- "BversusA"
+# reorder columns
+col_order <- c("genotype", "comparison",	"TP",	"FN",	"TN",	"FP",	"Se",	"Sp",	"Ac")
+results.AvB.subselection <- results.AvB.subselection[, col_order]
+results.BvA.subselection <- results.BvA.subselection[, col_order]
+# combine dataframes
+results.combined.subselection <- rbind(results.AvB.subselection, results.BvA.subselection)
 
 # sort according to accuracy
 results.AvB.subselection <- results.AvB.subselection[order(results.AvB.subselection$Ac, decreasing = TRUE),]
 results.BvA.subselection <- results.BvA.subselection[order(results.BvA.subselection$Ac, decreasing = TRUE),]
+results.combined.subselection <- results.combined.subselection[order(results.combined.subselection$Ac, decreasing = TRUE),]
 
 # control digits
 ## group A versus group B
@@ -383,10 +405,13 @@ results.AvB.subselection$Ac <- format(round(results.AvB.subselection$Ac, 2), nsm
 results.BvA.subselection$Se <- format(round(results.BvA.subselection$Se, 2), nsmall = 2)
 results.BvA.subselection$Sp <- format(round(results.BvA.subselection$Sp, 2), nsmall = 2)
 results.BvA.subselection$Ac <- format(round(results.BvA.subselection$Ac, 2), nsmall = 2)
+## combined comparisons
+results.combined.subselection$Se <- format(round(results.combined.subselection$Se, 2), nsmall = 2)
+results.combined.subselection$Sp <- format(round(results.combined.subselection$Sp, 2), nsmall = 2)
+results.combined.subselection$Ac <- format(round(results.combined.subselection$Ac, 2), nsmall = 2)
 
 # export results
-write.table(results.AvB.subselection, file = paste(opt$prefix, "results.AversusB.tsv", sep = ""), append = FALSE, quote = FALSE, sep = "\t", dec = ".", row.names = FALSE, col.names = TRUE)
-write.table(results.BvA.subselection, file = paste(opt$prefix, "results.BversusA.tsv", sep = ""), append = FALSE, quote = FALSE, sep = "\t", dec = ".", row.names = FALSE, col.names = TRUE)
+fwrite(results.combined.subselection, file = paste(opt$prefix, "results.tsv", sep = ""), append = FALSE, quote = FALSE, sep = "\t", dec = ".", row.names = FALSE, col.names = TRUE)
 
 # output RData
 if (isTRUE(opt$rdata)){
@@ -399,7 +424,7 @@ if (isTRUE(opt$rdata)){
 # step control
 step9.time <- Sys.time()
 step9.taken <- difftime(step9.time, step8.time, units="secs")
-cat(" Step 9 completed: writting output, approx. ", ceiling(step9.taken), " second(s)", "\n", sep = "")
+cat(" Step 9 completed: merging and writting of results, approx. ", ceiling(step9.taken), " second(s)", "\n", sep = "")
 
 # keep in mind end time
 end.time <- Sys.time()
@@ -408,8 +433,8 @@ end.time <- Sys.time()
 time.taken <- difftime(end.time, start.time, units="secs")
 
 # export output log
-## output in a summary_workflow.txt file
-sink(paste(opt$prefix, "summary_workflow.txt", sep = ""))
+## output in a summary.txt file
+sink(paste(opt$prefix, "summary.txt", sep = ""))
 ## print
 cat("\n", "###########################################################")
 cat("\n", "####################### Information #######################")
@@ -426,8 +451,8 @@ cat("\n", "optparse:", getNamespaceVersion("optparse"), "\n")
 cat("\n", "benchmarkme:", getNamespaceVersion("benchmarkme"), "\n")
 cat("\n", "doParallel:", getNamespaceVersion("doParallel"), "\n")
 cat("\n", "data.table:", getNamespaceVersion("data.table"), "\n")
-cat("\n", "fastDummies:", getNamespaceVersion("fastDummies"), "\n")
 cat("\n", "dplyr:", getNamespaceVersion("dplyr"), "\n")
+cat("\n", "fastDummies:", getNamespaceVersion("fastDummies"), "\n")
 cat("\n", "###########################################################")
 cat("\n", "######################## References #######################")
 cat("\n", "###########################################################", "\n")
@@ -451,22 +476,24 @@ cat("\n", "Number of samples:", nrow(trans_data_mutations), "\n")
 cat("\n", "Number of samples labeled group 'A':", nrow(data_A), "\n")
 cat("\n", "Number of samples labeled group 'B':", nrow(data_B), "\n")
 cat("\n", "Number of provided genomic profiles:", ncol(trans_data_mutations)-1, "\n")
-cat("\n", "Number of infered dummy genomic profiles:", ncol(joint_binary_trans_data_mutations)-2, "\n")
-cat("\n", "Number of remaining dummy genomic profiles after filtration (group A versus group B):", nrow(results.AvB.subselection), "\n")
-cat("\n", "Number of remaining dummy profiles after filtration (group B versus group A):", nrow(results.BvA.subselection), "\n")
+cat("\n", "Number of provided binary genomic profiles:", length(binary.vec), "\n")
+cat("\n", "Number of provided catagorical genomic profiles:", length(categorical.vec), "\n")
+cat("\n", "Number of binary genomic profiles after transformation of categorical profiles into binary profiles:", ncol(joint_binary_trans_data_mutations)-2, "\n")
+cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group A versus group B):", nrow(results.AvB.subselection), "\n")
+cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group B versus group A):", nrow(results.BvA.subselection), "\n")
+cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group A versus group B and group B versus group A):", nrow(results.combined.subselection), "\n")
 cat("\n", "###########################################################")
 cat("\n", "####################### Output files ######################")
 cat("\n", "###########################################################", "\n")
-cat("\n", paste(opt$prefix, "results.AversusB.tsv", sep = ""), "\n") 
-cat("\n", paste(opt$prefix, "results.BversusA.tsv", sep = ""), "\n")
-cat("\n", paste(opt$prefix, "summary_workflow.txt", sep = ""), "\n")
+cat("\n", paste(opt$prefix, "results.tsv", sep = ""), "\n")
+cat("\n", paste(opt$prefix, "summary.txt", sep = ""), "\n")
 if (isTRUE(opt$rdata)){
   cat("\n", paste(opt$prefix, "saved_data.RData", sep = ""), "\n")
   cat("\n", paste(opt$prefix, "saved_images.RData", sep = ""), "\n")
 }
 cat("\n")
 
-## close workflow.txt
+## close summary.txt
 sink()
 
 ## stop the computing cluster
