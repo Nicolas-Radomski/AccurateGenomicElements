@@ -141,20 +141,20 @@ Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples
 # Install Docker image and launch with Docker
 ## 1/ Pull Docker image from Docker Hub
 ```
-docker pull nicolasradomski/accurategenomicelements:1.1
+docker pull nicolasradomski/accurategenomicelements:1.2
 ```
 ## 2/ Launch with Docker
 ### Call usage
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.1
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.2
 ```
 ### Call help
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.1 -h
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.2 -h
 ```
 ### Command examples
 ```
-docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.1 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
+docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.2 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
 ```
 # Expected output
 - summary.txt
