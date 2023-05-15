@@ -90,7 +90,7 @@ help2 <- "Help: Rscript AccurateGenomicElements.R --help"
 # management of mandatory arguments
 ## arguments -g/--groups and -m/--mutations
 if (((is.null(opt$groups)) || (is.null(opt$mutations))) == TRUE){
-  cat("\n", 'Version: 1.1', "\n")
+  cat("\n", 'Version: 1.2', "\n")
   cat("\n", 'Please, provide at least two input files (i.e. mandatory arguments -g and -m) and potentially other optional arguments:', "\n")
   cat("\n", 'Example 1: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv', "\n")
   cat("\n", 'Example 2: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -c 4 -m GenomicProfiles-100-samples.tsv -c 4 -t 30 -f 50 -a 80 -o MyOutput_', "\n")
