@@ -400,17 +400,17 @@ results.combined.subselection <- results.combined.subselection[order(results.com
 
 # control digits
 ## group A versus group B
-results.AvB.subselection$Se <- format(round(results.AvB.subselection$Se, 2), nsmall = 2)
-results.AvB.subselection$Sp <- format(round(results.AvB.subselection$Sp, 2), nsmall = 2)
-results.AvB.subselection$Ac <- format(round(results.AvB.subselection$Ac, 2), nsmall = 2)
+results.AvB.subselection$Se <- trunc(results.AvB.subselection$Se*1e4)/1e4
+results.AvB.subselection$Sp <- trunc(results.AvB.subselection$Sp*1e4)/1e4
+results.AvB.subselection$Ac <- trunc(results.AvB.subselection$Ac*1e4)/1e4
 ## group B versus group A
-results.BvA.subselection$Se <- format(round(results.BvA.subselection$Se, 2), nsmall = 2)
-results.BvA.subselection$Sp <- format(round(results.BvA.subselection$Sp, 2), nsmall = 2)
-results.BvA.subselection$Ac <- format(round(results.BvA.subselection$Ac, 2), nsmall = 2)
+results.BvA.subselection$Se <- trunc(results.BvA.subselection$Se*1e4)/1e4
+results.BvA.subselection$Sp <- trunc(results.BvA.subselection$Sp*1e4)/1e4
+results.BvA.subselection$Ac <- trunc(results.BvA.subselection$Ac*1e4)/1e4
 ## combined comparisons
-results.combined.subselection$Se <- format(round(results.combined.subselection$Se, 2), nsmall = 2)
-results.combined.subselection$Sp <- format(round(results.combined.subselection$Sp, 2), nsmall = 2)
-results.combined.subselection$Ac <- format(round(results.combined.subselection$Ac, 2), nsmall = 2)
+results.combined.subselection$Se <- trunc(results.combined.subselection$Se*1e4)/1e4
+results.combined.subselection$Sp <- trunc(results.combined.subselection$Sp*1e4)/1e4
+results.combined.subselection$Ac <- trunc(results.combined.subselection$Ac*1e4)/1e4
 
 # export results
 fwrite(results.combined.subselection, file = paste(opt$prefix, "results.tsv", sep = ""), append = FALSE, quote = FALSE, sep = "\t", dec = ".", row.names = FALSE, col.names = TRUE)
