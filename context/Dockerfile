@@ -1,5 +1,4 @@
-# Install Ubuntu 20.04 (focal) with R base and R version management (https://rocker-project.org/images/versioned/r-ver.html)
-FROM rocker/r-ver:4.2.3
+FROM rocker/r-ver:4.3.0
 # set the default repository to CRAN
 RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >>"${R_HOME}/etc/Rprofile.site"
 # sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD instructions
