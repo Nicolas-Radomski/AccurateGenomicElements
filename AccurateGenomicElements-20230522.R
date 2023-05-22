@@ -84,17 +84,17 @@ opt_parser <- OptionParser(option_list=option_list);
 opt <- suppressWarnings(parse_args(opt_parser));
 
 # prepare a global message for help
-help1 <- "Help: Rscript AccurateGenomicElements.R -h"
-help2 <- "Help: Rscript AccurateGenomicElements.R --help"
+help1 <- "Help: Rscript AccurateGenomicElements-20230522.R -h"
+help2 <- "Help: Rscript AccurateGenomicElements-20230522.R --help"
 
 # management of mandatory arguments
 ## arguments -g/--groups and -m/--mutations
 if (((is.null(opt$groups)) || (is.null(opt$mutations))) == TRUE){
   cat("\n", 'Version: 1.3', "\n")
   cat("\n", 'Please, provide at least two input files (i.e. mandatory arguments -g and -m) and potentially other optional arguments:', "\n")
-  cat("\n", 'Example 1: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv', "\n")
-  cat("\n", 'Example 2: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -c 4 -m GenomicProfiles-100-samples.tsv -c 4 -t 30 -f 50 -a 80 -o MyOutput_', "\n")
-  cat("\n", 'Example 3: Rscript --max-ppsize=500000 AccurateGenomicElements.R --groups GroupLabels-100-samples.tsv --mutations GenomicProfiles-100-samples.tsv --cpu 4 --sensitivity 30 --specificity 50 --accuracy 80 --prefix MyOutput_', "\n")
+  cat("\n", 'Example 1: Rscript --max-ppsize=500000 AccurateGenomicElements-20230522.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv', "\n")
+  cat("\n", 'Example 2: Rscript --max-ppsize=500000 AccurateGenomicElements-20230522.R -g GroupLabels-100-samples.tsv -c 4 -m GenomicProfiles-100-samples.tsv -c 4 -t 30 -f 50 -a 80 -o MyOutput_', "\n")
+  cat("\n", 'Example 3: Rscript --max-ppsize=500000 AccurateGenomicElements-20230522.R --groups GroupLabels-100-samples.tsv --mutations GenomicProfiles-100-samples.tsv --cpu 4 --sensitivity 30 --specificity 50 --accuracy 80 --prefix MyOutput_', "\n")
   cat("\n", help1, "\n")
   cat("\n", help2, "\n", "\n")
   stop()

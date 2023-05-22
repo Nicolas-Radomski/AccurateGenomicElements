@@ -23,24 +23,21 @@ sample			group
 ```
 ## 2/ Input mutation file (tsv) with potential empty cells for missing data (e.g. GenomicProfiles-100-samples.tsv)
 ```
-Locus	2015.TE.14784.1.19.1	2016.TE.28410.1.48.1	2016.TE.3350.1.18.1	2016.TE.4440.1.41.1
-L1	A0			A0			A1			A1
-L2	A0			A0			A1			A1
-L3	A1			A1			A0			A0
-L4	A1			A1			A0			A0
-L5	A0			A0			A1			A1
-L6	A0			A0			A1			A1
-L7	A1						A0			A0
-L8	A1			A1			A0			A0
+sample			L1	L2	L3	L4	L5	L6	L7	L8
+2015.TE.14784.1.19.1	A0	A0	A1	A1	A0	A0	A1	A1
+2016.TE.28410.1.48.1	A0	A0	A1	A1	A0	A0	A0	A1
+2016.TE.3350.1.18.1	A1	A1	A0	A0		A1	A0	A0
+2016.TE.4440.1.41.1	A1	A1	A0	A0	A1	A1	A1	A0
+2018.TE.15762.1.12.1	A0	A0	A1	A1	A0	A0	A1	A1
+2019.TE.1226.1.3.1	A0	A0	A1	A1	A0	A0	A0	A1
 ```
 # Options
 ```
-Usage: /context/AccurateGenomicElements.R [options]
 Options:
 	-g CHARACTER, --groups=CHARACTER
 		Input group file with an absolute or relative path (tab-separated values). First column: sample identifiers identical to the mutation input file (header: 'sample'). Second column: Group labels 'A' or 'B' for each sample (header: 'group'). [MANDATORY]
 	-m CHARACTER, --mutations=CHARACTER
-		Input mutation file with an absolute or relative path (tab-separated values). First column: loci, positions or names of mutations (header: whatever). Other columns: binary (e.g. presence/absence of genes or kmers) or categorical (e.g. profiles of alleles or variants) profiles of mutations for each sample (header: sample identifiers identical to the group input file). [MANDATORY]
+		Input mutation file with an absolute or relative path (tab-separated values). First column: sample identifiers identical to the group input file (header: 'sample'). Other columns: binary (e.g. presence/absence of genes or kmers) or categorical (e.g. profiles of alleles or variants) profiles of mutations for each sample (header: labels of genomic profiles). [MANDATORY]
 	-c INTEGER, --cpu=INTEGER
 		Number of central processing units (CPUs). [OPTIONAL, default = all]
 	-t NUMERIC, --sensitivity=NUMERIC
@@ -141,20 +138,20 @@ Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples
 # Install Docker image and launch with Docker
 ## 1/ Pull Docker image from Docker Hub
 ```
-docker pull nicolasradomski/accurategenomicelements:1.2
+docker pull nicolasradomski/accurategenomicelements:1.3
 ```
 ## 2/ Launch with Docker
 ### Call usage
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.2
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.3
 ```
 ### Call help
 ```
-docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.2 -h
+docker run --name nicolas --rm -u `id -u`:`id -g` nicolasradomski/accurategenomicelements:1.3 -h
 ```
 ### Command examples
 ```
-docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.2 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
+docker run --name nicolas --rm -v $(pwd):/wk -w /wk --ulimit stack=100000000 -e R_MAX_VSIZE=25G nicolasradomski/accurategenomicelements:1.3 -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv -o test-100-samples-dockerhub_
 ```
 # Expected output
 - summary.txt

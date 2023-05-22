@@ -64,7 +64,7 @@ option_list = list(
   make_option(c("-g", "--groups"), type="character", default=NULL, 
               help="Input group file with an absolute or relative path (tab-separated values). First column: sample identifiers identical to the mutation input file (header: 'sample'). Second column: Group labels 'A' or 'B' for each sample (header: 'group'). [MANDATORY]", metavar="character"),
   make_option(c("-m", "--mutations"), type="character", default=NULL, 
-              help="Input mutation file with an absolute or relative path (tab-separated values). First column: loci, positions or names of mutations (header: whatever). Other columns: binary (e.g. presence/absence of genes or kmers) or categorical (e.g. profiles of alleles or variants) profiles of mutations for each sample (header: sample identifiers identical to the group input file). [MANDATORY]", metavar="character"),
+              help="Input mutation file with an absolute or relative path (tab-separated values). First column: sample identifiers identical to the group input file (header: 'sample'). Other columns: binary (e.g. presence/absence of genes or kmers) or categorical (e.g. profiles of alleles or variants) profiles of mutations for each sample (header: labels of genomic profiles). [MANDATORY]", metavar="character"),
   make_option(c("-c", "--cpu"), type="integer", default=allCPUs, 
               help="Number of central processing units (CPUs). [OPTIONAL, default = all]", metavar="integer"),
   make_option(c("-t", "--sensitivity"), type="numeric", default=0, 
@@ -90,7 +90,7 @@ help2 <- "Help: Rscript AccurateGenomicElements.R --help"
 # management of mandatory arguments
 ## arguments -g/--groups and -m/--mutations
 if (((is.null(opt$groups)) || (is.null(opt$mutations))) == TRUE){
-  cat("\n", 'Version: 1.2', "\n")
+  cat("\n", 'Version: 1.3', "\n")
   cat("\n", 'Please, provide at least two input files (i.e. mandatory arguments -g and -m) and potentially other optional arguments:', "\n")
   cat("\n", 'Example 1: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -m GenomicProfiles-100-samples.tsv', "\n")
   cat("\n", 'Example 2: Rscript --max-ppsize=500000 AccurateGenomicElements.R -g GroupLabels-100-samples.tsv -c 4 -m GenomicProfiles-100-samples.tsv -c 4 -t 30 -f 50 -a 80 -o MyOutput_', "\n")
@@ -177,7 +177,9 @@ cat(" Step 1 completed: checking of arguments, approx. ", ceiling(step1.taken), 
 # prepare the dataframe of groups
 ## read the dataframe of groups preventing "X." as prefix in header variables
 data_groups <- fread(opt$groups, dec = ".", header=TRUE, sep = "\t", check.names = FALSE)
-## replace by "mutation" the second variable
+## replace by "sample" the first variable
+names(data_groups)[1] <- "sample"
+## replace by "group" the second variable
 names(data_groups)[2] <- "group"
 ## test if the group variable is constituted of A or B
 ### expected length
@@ -196,20 +198,18 @@ if ((AB - A - B) != 0) {
 # prepare the dataframe of mutations
 ## read the dataframe of mutations preventing "X." as prefix in header variables
 data_mutations <- fread(opt$mutations, dec = ".", header=TRUE, sep = "\t", check.names = FALSE)
-## replace by "mutation" the first variable
-names(data_mutations)[1] <- "mutation"
+## replace by "sample" the first variable
+names(data_mutations)[1] <- "sample"
 ## replace missing data by NA
 data_mutations[data_mutations == ''] <- NA
-## replace missing data encoded "" with missing"
+## replace missing data encoded "" with "empty"
 data_mutations[is.na(data_mutations)] <- "empty"
-## transpose dataframe (data.table)
-trans_data_mutations <- transpose(data_mutations, keep.names = "sample", make.names = "mutation")
 
 # test equality of sample identifiers from the input group and mutation files
 ## sample identifiers from the input group file
 IDs.groups <- sort(data_groups$sample, decreasing=FALSE)
 ## sample identifiers from the input group file
-IDs.mutations <- sort(trans_data_mutations$sample, decreasing=FALSE)
+IDs.mutations <- sort(data_mutations$sample, decreasing=FALSE)
 ## test equality
 if (identical(IDs.groups, IDs.mutations) == FALSE) {
   cat("\n", "The sample identifiers from the input group and mutations files must be identical", "\n")
@@ -221,14 +221,14 @@ if (identical(IDs.groups, IDs.mutations) == FALSE) {
 # step control
 step2.time <- Sys.time()
 step2.taken <- difftime(step2.time, step1.time, units="secs")
-cat(" Step 2 completed: reading, transposition and preparation of dataframes, approx. ", ceiling(step2.taken), " second(s)", "\n", sep = "")
+cat(" Step 2 completed: reading and cheaking of dataframes, approx. ", ceiling(step2.taken), " second(s)", "\n", sep = "")
 
 # transform the categorical genomic profiles into binary genomic profiles (fastDummies: 1.6.3, 2020-11-29)
 ## retrieve sample identifiers
-sample <- trans_data_mutations$sample
+sample <- data_mutations$sample
 ## keep mutations in the dataframe
-col <- ncol(trans_data_mutations)
-df <- trans_data_mutations[,2:col]
+col <- ncol(data_mutations)
+df <- data_mutations[,2:col]
 
 # identify binary variables
 is.binary <- apply(df,2,function(x) {all(x %in% 0:1)})
@@ -244,16 +244,16 @@ categorical.vec <- row.names(categorical.df)
 ## transformation of categorical profiles into binary profiles
 if (length(categorical.vec) > 1){
   ### in case of presence of categorical variables
-  binary_trans_data_mutations <- dummy_cols(df, select_columns = categorical.vec,
+  binary_data_mutations <- dummy_cols(df, select_columns = categorical.vec,
                                             remove_first_dummy = FALSE,
                                             remove_most_frequent_dummy = FALSE,
                                             remove_selected_columns = TRUE)
 } else {
   ### in case of absence of categorical variables
-  binary_trans_data_mutations <- df
+  binary_data_mutations <- df
 }
 ## put back the sample identifiers
-binary_trans_data_mutations <- cbind(sample, binary_trans_data_mutations)
+binary_data_mutations <- cbind(sample, binary_data_mutations)
 
 # step control
 step3.time <- Sys.time()
@@ -261,7 +261,7 @@ step3.taken <- difftime(step3.time, step2.time, units="secs")
 cat(" Step 3 completed: transformation of categorical profiles into binary profiles, approx. ", ceiling(step3.taken), " second(s)", "\n", sep = "")
 
 ## joint (dplyr)
-joint_binary_trans_data_mutations <- suppressWarnings(left_join(data_groups, binary_trans_data_mutations, by = "sample", keep = FALSE))
+joint_binary_data_mutations <- suppressWarnings(left_join(data_groups, binary_data_mutations, by = "sample", keep = FALSE))
 
 # step control
 step4.time <- Sys.time()
@@ -270,10 +270,10 @@ cat(" Step 4 completed: jointing of dataframes, approx. ", ceiling(step4.taken),
 
 # splitting of group labels
 ## for the group A
-data_A <- subset(joint_binary_trans_data_mutations, group == 'A')
+data_A <- subset(joint_binary_data_mutations, group == 'A')
 data_A <- data_A[,-2]
 ## for the group B
-data_B <- subset(joint_binary_trans_data_mutations, group == 'B')
+data_B <- subset(joint_binary_data_mutations, group == 'B')
 data_B <- data_B[,-2]
 
 # step control
@@ -281,26 +281,27 @@ step5.time <- Sys.time()
 step5.taken <- difftime(step5.time, step4.time, units="secs")
 cat(" Step 5 completed: splitting into dataframes according to groups, approx. ", ceiling(step5.taken), " second(s)", "\n", sep = "")
 
-# transpose dataframes of group labels (data.table)
-## for the group of interest (Gi)
-trans_data_A <- transpose(data_A, keep.names = "genotype", make.names = "sample")
-trans_data_B <- transpose(data_B, keep.names = "genotype", make.names = "sample")
+# remove sample from dataframes
+## for the group A
+data_A_modif <- subset(data_A, select = -sample)
+## for the group B
+data_B_modif <- subset(data_B, select = -sample)
 
 # step control
 step6.time <- Sys.time()
 step6.taken <- difftime(step6.time, step5.time, units="secs")
-cat(" Step 6 completed: transpositon of group specific dataframes, approx. ", ceiling(step6.taken), " second(s)", "\n", sep = "")
+cat(" Step 6 completed: modification of group specific dataframes, approx. ", ceiling(step6.taken), " second(s)", "\n", sep = "")
 
 # calculate metrics
 ## group A versus group B
 ### true positive (TP)
-TP.AvB <- apply(trans_data_A, 1, function(x) length(which(x==1)))
+TP.AvB <- as.vector(apply(data_A_modif, 2, function(x){sum(x==1)}))
 ### false negative (FN)
-FN.AvB <- apply(trans_data_A, 1, function(x) length(which(x==0)))
+FN.AvB <- as.vector(apply(data_A_modif, 2, function(x){sum(x==0)}))
 ### true negative (TN)
-TN.AvB <- apply(trans_data_B, 1, function(x) length(which(x==0)))
+TN.AvB <- as.vector(apply(data_B_modif, 2, function(x){sum(x==0)}))
 ### false positive (FP)
-FP.AvB <- apply(trans_data_B, 1, function(x) length(which(x==1)))
+FP.AvB <- as.vector(apply(data_B_modif, 2, function(x){sum(x==1)}))
 ### sensitivity (Se=TP/(TP+FN))
 Se.AvB <- TP.AvB/(TP.AvB+FN.AvB)*100
 ### specificity (Sp=TN/(TN+FP))
@@ -308,7 +309,8 @@ Sp.AvB <- TN.AvB/(TN.AvB+FP.AvB)*100
 ### accuracy (Ac=(TP+TN)/(TP+TN+FP+FN))
 Ac.AvB <- (TP.AvB+TN.AvB)/(TP.AvB+TN.AvB+FP.AvB+FN.AvB)*100
 ### retrieve genotype identifiers
-genotype <- trans_data_A$genotype
+genotype <- colnames(data_A_modif)
+
 ### combine
 results.AvB <- as.data.frame(cbind(genotype, TP.AvB, FN.AvB, TN.AvB, FP.AvB, Se.AvB, Sp.AvB, Ac.AvB))
 ### rename variables
@@ -327,13 +329,13 @@ cols.num <- c("Se", "Sp", "Ac")
 results.AvB[cols.num] <- sapply(results.AvB[cols.num],as.numeric)
 ## group B versus group A
 ### true positive (TP)
-TP.BvA <- apply(trans_data_B, 1, function(x) length(which(x==1)))
+TP.BvA <- as.vector(apply(data_B_modif, 2, function(x){sum(x==1)}))
 ### false negative (FN)
-FN.BvA <- apply(trans_data_B, 1, function(x) length(which(x==0)))
+FN.BvA <- as.vector(apply(data_B_modif, 2, function(x){sum(x==0)}))
 ### true negative (TN)
-TN.BvA <- apply(trans_data_A, 1, function(x) length(which(x==0)))
+TN.BvA <- as.vector(apply(data_A_modif, 2, function(x){sum(x==0)}))
 ### false positive (FP)
-FP.BvA <- apply(trans_data_A, 1, function(x) length(which(x==1)))
+FP.BvA <- as.vector(apply(data_A_modif, 2, function(x){sum(x==1)}))
 ### sensitivity (Se=TP/(TP+FN))
 Se.BvA <- TP.BvA/(TP.BvA+FN.BvA)*100
 ### specificity (Sp=TN/(TN+FP))
@@ -341,7 +343,7 @@ Sp.BvA <- TN.BvA/(TN.BvA+FP.BvA)*100
 ### accuracy (Ac=(TP+TN)/(TP+TN+FP+FN))
 Ac.BvA <- (TP.BvA+TN.BvA)/(TP.BvA+TN.BvA+FP.BvA+FN.BvA)*100
 ### retrieve genotype identifiers
-genotype <- trans_data_A$genotype
+genotype <- colnames(data_A_modif)
 ### combine
 results.BvA <- as.data.frame(cbind(genotype, TP.BvA, FN.BvA, TN.BvA, FP.BvA, Se.BvA, Sp.BvA, Ac.BvA))
 ### rename variables
@@ -472,13 +474,13 @@ cat("\n", "Output prefix:", opt$prefix, "\n")
 cat("\n", "###########################################################")
 cat("\n", "######################### Metrics #########################")
 cat("\n", "###########################################################", "\n")
-cat("\n", "Number of samples:", nrow(trans_data_mutations), "\n")
+cat("\n", "Number of samples:", nrow(data_mutations), "\n")
 cat("\n", "Number of samples labeled group 'A':", nrow(data_A), "\n")
 cat("\n", "Number of samples labeled group 'B':", nrow(data_B), "\n")
-cat("\n", "Number of provided genomic profiles:", ncol(trans_data_mutations)-1, "\n")
+cat("\n", "Number of provided genomic profiles:", ncol(data_mutations)-1, "\n")
 cat("\n", "Number of provided binary genomic profiles:", length(binary.vec), "\n")
 cat("\n", "Number of provided catagorical genomic profiles:", length(categorical.vec), "\n")
-cat("\n", "Number of binary genomic profiles after transformation of categorical profiles into binary profiles:", ncol(joint_binary_trans_data_mutations)-2, "\n")
+cat("\n", "Number of binary genomic profiles after transformation of categorical profiles into binary profiles:", ncol(joint_binary_data_mutations)-2, "\n")
 cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group A versus group B):", nrow(results.AvB.subselection), "\n")
 cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group B versus group A):", nrow(results.BvA.subselection), "\n")
 cat("\n", "Number of remaining binary genomic profiles after threshold-based filtration (group A versus group B and group B versus group A):", nrow(results.combined.subselection), "\n")
